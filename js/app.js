@@ -36,16 +36,11 @@ const Mobs = {
             // if they're off the right side of the screen, pick a new row and a new speed,
             // then put them back at the start.
             if (this.locX > 605) {
-                console.log('moving back to start');
                 this.gridY = pickRandomRow();
                 this.locY = (83 * this.gridY) - 15;
                 this.locX = -101;
                 this.speed = pickRandomSpeed();
             } else {
-                console.log('moving to the right');
-                console.log('current dt: ' + dt);
-                console.log('current locX: ' + this.locX);
-                console.log('current speed: ' + this.speed);
                 this.locX += Math.floor(this.speed * dt);
             }
         },
@@ -186,6 +181,5 @@ document.addEventListener('keyup', function(e) {
         40: 'down'
     };
 
-    console.log('pressed key ' + allowedKeys[e.keyCode]);
     player.handleInput(allowedKeys[e.keyCode]);
 });
