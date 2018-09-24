@@ -22,12 +22,18 @@ var Engine = (function(global) {
     win = global.window,
     canvas = doc.createElement('canvas'),
     ctx = canvas.getContext('2d'),
+    score = doc.createElement('div'),
+    points = 0,
     lastTime,
     GameMap;
 
     canvas.width = 505;
     canvas.height = 606;
     doc.body.appendChild(canvas);
+    
+    score.textContent = `Current score: ${points}`;
+    score.id = 'score';
+    doc.body.appendChild(score);
 
     /* This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
@@ -110,6 +116,8 @@ var Engine = (function(global) {
         if (player.gridY == 0) {
             player.gridX = 2;
             player.gridY = 5;
+            points++;
+            doc.getElementById('score').textContent = `Current score: ${points}`;
         }
     }
 

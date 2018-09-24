@@ -19,7 +19,9 @@ Clone the GitHub repo:
 ```
 git clone git@github.com:greaternemo/frontend-nanodegree-arcade-game.git
 ```
-At this point you can rename the directory to whatever you want to use for the URL. The included .htaccess file should work with any URL. 
+At this point you can rename the directory to whatever you want to use for the URL. The included .htaccess file should work with any URL, as it sets the DirectoryIndex to load frog.html.
+
+To play the game, simply visit the URL you have the game hosted at. For example, http://yourdomain.com/frontend-nanodegree-arcade-game will suffice using the included .htaccess file. Alternately, you can load the game locally by opening frog.html in a browser.
 
 ### How To Play
 

@@ -1,6 +1,12 @@
 // app.js
 // where the dudes live
 
+// This file doesn't use strict mode because I don't need anything beyond my crushing
+// fear of failure to encourage me to write the best code I know how to write.
+
+// I briefly added 'use strict' to this file, and everyting still worked, but my IDE told me
+// there were errors in places where there were none. Cool.
+
 /* Our basic Mob (mobile) object, which will represent anything that moves.
  * Our Mobject.
  * We'll define the shared properties here just for reference,
