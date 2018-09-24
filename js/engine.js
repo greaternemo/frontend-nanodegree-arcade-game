@@ -1,16 +1,16 @@
 /* Engine.js
  * This file provides the game loop functionality (update entities and render),
  * draws the initial game board on the screen, and then calls the update and
- * render methods on your player and enemy objects (defined in your app.js).
+ * render methods on the player and enemy objects.
  *
- * A game engine works by drawing the entire game screen over and over, kind of
- * like a flipbook you may have created as a kid. When your player moves across
- * the screen, it may look like just that image/character is moving or being
- * drawn but that is not the case. What's really happening is the entire "scene"
- * is being drawn over and over, presenting the illusion of animation.
+ * There was a long description here of how animation frames work, which seemed
+ * so elementary to me that it came off as patronizing. The description obviously
+ * wasn't for me, so it doesn't really matter.
  *
- * This engine makes the canvas' context (ctx) object globally available to make 
- * writing app.js a little simpler to work with.
+ * This engine makes the canvas' context (ctx) object globally available because
+ * it was written that way when I found it, but I could've just as well passed
+ * it in as a parameter with each call to a mob's render method and removed it
+ * from app.js entirely.
  */
 
 var Engine = (function(global) {
@@ -18,11 +18,12 @@ var Engine = (function(global) {
      * create the canvas element, grab the 2D context for that canvas
      * set the canvas elements height/width and add it to the DOM.
      */
-    var doc = global.document,
-        win = global.window,
-        canvas = doc.createElement('canvas'),
-        ctx = canvas.getContext('2d'),
-        lastTime;
+    let doc = global.document,
+    win = global.window,
+    canvas = doc.createElement('canvas'),
+    ctx = canvas.getContext('2d'),
+    lastTime,
+    GameMap;
 
     canvas.width = 505;
     canvas.height = 606;
@@ -30,7 +31,9 @@ var Engine = (function(global) {
 
     /* This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
+     * This is unchanged except for how dt is calculated.
      */
+
     function main() {
         /* Get our time delta information which is required if your game
          * requires smooth animation. Because everyone's computer processes
@@ -39,7 +42,7 @@ var Engine = (function(global) {
          * computer is) - hurray time!
          */
         var now = Date.now(),
-            dt = (now - lastTime) / 1000.0;
+            dt = (now - lastTime);
 
         /* Call our update/render functions, pass along the time delta to
          * our update function since it may be used for smooth animation.
@@ -60,35 +63,76 @@ var Engine = (function(global) {
 
     /* This function does some initial setup that should only occur once,
      * particularly setting the lastTime variable that is required for the
-     * game loop.
+     * game loop and generating our GameMap that's going to save us a bazillion
+     * redraws.
      */
+
     function init() {
         reset();
         lastTime = Date.now();
+        GameMap = generateGameMap();
         main();
     }
 
-    /* This function is called by main (our game loop) and itself calls all
-     * of the functions which may need to update entity's data. Based on how
-     * you implement your collision detection (when two entities occupy the
-     * same space, for instance when your character should die), you may find
-     * the need to add an additional function call here. For now, we've left
-     * it commented out - you may or may not want to implement this
-     * functionality this way (you could just implement collision detection
-     * on the entities themselves within your app.js file).
+    /* This function obviously checks for collisions.
+     * Here, we don't care about all collisions, just the collisions between
+     * an enemy and the player.
+     * Should this be a method on the enemies? I didn't think so.
+     * Since this 'engine' is more like a barebones framework, I'm using it as
+     * such. This means it gets delegated things like physics calculations.
+     * The methods on the mobs *ONLY* concern themselves. Anything involving
+     * interaction or mass updates came over here with updateEntities.
      */
+
+    function checkCollisions() {
+        let collided = false;
+        pLeft = player.locX;
+        pRight = player.locX + 100;
+        allEnemies.forEach(function(enemy) {
+            if (enemy.gridY == player.gridY &&
+                enemy.locX < pRight &&
+                enemy.locX + 100 > pLeft) {
+                // YOU COLLIDE
+                // GOOD DAY SIR
+                collided = true;
+            }
+        });
+        if (collided === true) {
+            // We return the player to their starting location
+            player.gridX = 2;
+            player.gridY = 5;
+        }
+    }
+
+    // If the player makes it to the water, they win and we move them back to the start
+
+    function checkForWin() {
+        if (player.gridY == 0) {
+            player.gridX = 2;
+            player.gridY = 5;
+        }
+    }
+
+    /* This function is called by main (our game loop) and itself calls all
+     * of the functions which may need to update entity's data. 
+     */
+
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        checkCollisions();
+        checkForWin();
     }
 
     /* This is called by the update function and loops through all of the
      * objects within your allEnemies array as defined in app.js and calls
-     * their update() methods. It will then call the update function for your
-     * player object. These update methods should focus purely on updating
-     * the data/properties related to the object. Do your drawing in your
-     * render methods.
+     * their update() methods. It will then call the update function for the
+     * player object.
+     * The update method for enemy mobs calculates their position based on their
+     * speed, then render uses those updated coordinates.
+     * The update method for the player mob calculates their position based on
+     * their position on the grid, then render uses those updated coordinates.
      */
+
     function updateEntities(dt) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
@@ -96,30 +140,46 @@ var Engine = (function(global) {
         player.update();
     }
 
-    /* This function initially draws the "game level", it will then call
-     * the renderEntities function. Remember, this function is called every
-     * game tick (or loop of the game engine) because that's how games work -
-     * they are flipbooks creating the illusion of animation but in reality
-     * they are just drawing the entire screen over and over.
+    /* It's hella weird to me that this code just redraws the one canvas over and over,
+     * but real talk I'm not about to rewrite this renderer when it's already here.
      */
-    function render() {
+
+    /* OK CHANGED MY MIND
+     * We're going to define GameMap as a reference to a canvas that we've drawn
+     * the background onto. This way, instead of rebuilding the background every time
+     * we redraw, we can just redraw this canvas, then the mobs.
+     * That drops us to 5 draws per tick instead of 35.
+     */
+
+    function generateGameMap() {
+        let baseMapCanvas = doc.createElement('canvas');
+        let baseMap = baseMapCanvas.getContext('2d');
+        baseMapCanvas.width = 505;
+        baseMapCanvas.height = 606;
+
         /* This array holds the relative URL to the image used
          * for that particular row of the game level.
          */
-        var rowImages = [
-                'images/water-block.png',   // Top row is water
-                'images/stone-block.png',   // Row 1 of 3 of stone
-                'images/stone-block.png',   // Row 2 of 3 of stone
-                'images/stone-block.png',   // Row 3 of 3 of stone
-                'images/grass-block.png',   // Row 1 of 2 of grass
-                'images/grass-block.png'    // Row 2 of 2 of grass
-            ],
-            numRows = 6,
-            numCols = 5,
-            row, col;
-        
-        // Before drawing, clear existing canvas
-        ctx.clearRect(0,0,canvas.width,canvas.height)
+        let rowImages = [
+                'images/water-block.png', // Top row is water
+            'images/stone-block.png', // Row 1 of 3 of stone
+            'images/stone-block.png', // Row 2 of 3 of stone
+            'images/stone-block.png', // Row 3 of 3 of stone
+            'images/grass-block.png', // Row 1 of 2 of grass
+            'images/grass-block.png' // Row 2 of 2 of grass
+        ],
+        numRows = 6,
+        numCols = 5,
+        // the width of our cells
+        cellW = 101,
+        // the height of our cells in the grid.
+        // NOTE this isn't the same as the height to account for the way
+        // the terrain tiles have a front wall that we have to cover.
+        cellH = 83,
+        row, col;
+
+        baseMap.fillStyle = 'black';
+        baseMap.fillRect(0, 0, baseMapCanvas.width, baseMapCanvas.height);
 
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that
@@ -127,17 +187,15 @@ var Engine = (function(global) {
          */
         for (row = 0; row < numRows; row++) {
             for (col = 0; col < numCols; col++) {
-                /* The drawImage function of the canvas' context element
-                 * requires 3 parameters: the image to draw, the x coordinate
-                 * to start drawing and the y coordinate to start drawing.
-                 * We're using our Resources helpers to refer to our images
-                 * so that we get the benefits of caching these images, since
-                 * we're using them over and over.
-                 */
-                ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
+                baseMap.drawImage(Resources.get(rowImages[row]), col * cellW, row * cellH);
             }
         }
 
+        return baseMapCanvas;
+    }
+
+    function render() {
+        ctx.drawImage(GameMap, 0, 0);
         renderEntities();
     }
 
@@ -145,6 +203,7 @@ var Engine = (function(global) {
      * tick. Its purpose is to then call the render functions you have defined
      * on your enemy and player entities within app.js
      */
+
     function renderEntities() {
         /* Loop through all of the objects within the allEnemies array and call
          * the render function you have defined.
@@ -160,8 +219,11 @@ var Engine = (function(global) {
      * handle game reset states - maybe a new game menu or a game over screen
      * those sorts of things. It's only called once by the init() method.
      */
+
     function reset() {
-        // noop
+        // I am not normally one to turn in the minimum viable product for a
+        // project, but I'm already behind and this isn't my first rodeo,
+        // so I managed to put all this together over a weekend.
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -169,11 +231,11 @@ var Engine = (function(global) {
      * all of these images are properly loaded our game will start.
      */
     Resources.load([
-        'images/stone-block.png',
-        'images/water-block.png',
-        'images/grass-block.png',
-        'images/enemy-bug.png',
-        'images/char-boy.png'
+            'images/stone-block.png',
+            'images/water-block.png',
+            'images/grass-block.png',
+            'images/enemy-bug.png',
+            'images/char-horn-girl.png'
     ]);
     Resources.onReady(init);
 

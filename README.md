@@ -1,6 +1,34 @@
 frontend-nanodegree-arcade-game
 ===============================
 
-Students should use this [rubric](https://review.udacity.com/#!/projects/2696458597/rubric) for self-checking their submission. Make sure the functions you write are **object-oriented** - either class functions (like Player and Enemy) or class prototype functions such as Enemy.prototype.checkCollisions, and that the keyword 'this' is used appropriately within your class and class prototype functions to refer to the object the function is called upon. Also be sure that the **readme.md** file is updated with your instructions on both how to 1. Run and 2. Play your arcade game.
+# Not Frogger
 
-For detailed instructions on how to get started, check out this [guide](https://docs.google.com/document/d/1v01aScPjSWCCWQLIpFqvg3-vXLH2e8_SZQKC8jNO0Dc/pub?embedded=true).
+The Frogger clone game I made for the third project of the Udacity Front-End Nanodegree course.
+
+### Dependencies
+
+There are no software dependencies for this repo.
+
+The intended experience expects a display with a minimum width of 505px and requires a keyboard with standard arrow keys.
+
+There are no other dependencies.
+
+### Installation
+
+Clone the GitHub repo:
+```
+git clone git@github.com:greaternemo/frontend-nanodegree-arcade-game.git
+```
+At this point you can rename the directory to whatever you want to use for the URL. The included .htaccess file should work with any URL. 
+
+### How To Play
+
+You control the player character, the girl, with the 4 arrow keys (up, right, down, left).
+
+The object of the game is to walk through the path of the bugs to get to the water. If you make it to the water, you win and you'll be teleported back to the start.
+
+If any of the bugs run into you, you'll also be sent back to the start.
+
+### License
+
+The contents of this repository are not intended for reuse and borrow heavily from the source repo they were forked from.
